@@ -2,6 +2,7 @@ package ru.practicum.shareit.user;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.booking.common.BaseService;
 import ru.practicum.shareit.exeption.NotFoundException;
 import ru.practicum.shareit.exeption.ValidationException;
 import ru.practicum.shareit.user.dto.UserDto;
@@ -14,7 +15,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl extends BaseService implements UserService {
 
     private final UserRepository userRepository;
 
@@ -30,8 +31,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUserById(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Пользователь не найден: " + id));
+        User user = getOrThrow(userRepository.findById(id),
+                "Пользователь с id " + id + " не найден");
+
         return UserMapper.toUserDto(user);
     }
 
@@ -53,10 +55,10 @@ public class UserServiceImpl implements UserService {
             }
         });
 
-        if (request.getName() != null) {
+        if (request.getName() != null && !request.getName().isBlank()) {
             existing.setName(request.getName());
         }
-        if (request.getEmail() != null) {
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
             existing.setEmail(request.getEmail());
         }
 
@@ -66,6 +68,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUser(Long id) {
+        getOrThrow(userRepository.findById(id),
+                "Пользователь с id " + id + " не существует");
         userRepository.delete(id);
     }
 }
