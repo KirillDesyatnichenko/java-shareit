@@ -9,8 +9,9 @@ import lombok.Data;
 @Data
 public class UserInputDto {
     @NotBlank(message = "Имя должно быть заполнено!")
-    @Size(max = 200)
+    @Size(max = 255)
     private String name;
+
     @NotNull(message = "Адрес электронной почты не заполнен!")
     @Email(message = "Некорректный адрес электронной почты!")
     private String email;

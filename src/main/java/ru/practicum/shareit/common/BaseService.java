@@ -1,4 +1,4 @@
-package ru.practicum.shareit.booking.common;
+package ru.practicum.shareit.common;
 
 
 import ru.practicum.shareit.exeption.NotFoundException;
