@@ -73,8 +73,8 @@ public class ItemServiceImpl extends BaseService implements ItemService {
 
     @Override
     public ItemDto getItemById(Long itemId) {
-        Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new NotFoundException("Вещь не найдена: " + itemId));
+        Item item = getOrThrow(itemRepository.findById(itemId),
+                "Вещь с id " + itemId + " не найдена");
 
         List<CommentDto> comments = commentRepository.findByItem_Id(itemId).stream()
                 .map(CommentMapper::toDto)
@@ -174,12 +174,7 @@ public class ItemServiceImpl extends BaseService implements ItemService {
             throw new ValidationException("Пользователь не может оставить комментарий без завершённого бронирования вещи");
         }
 
-        Comment comment = Comment.builder()
-                .text(dto.getText())
-                .author(author)
-                .item(item)
-                .created(LocalDateTime.now())
-                .build();
+        Comment comment = CommentMapper.toEntity(dto, author, item);
 
         return CommentMapper.toDto(commentRepository.save(comment));
     }

@@ -14,7 +14,6 @@ import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.common.BaseService;
 import ru.practicum.shareit.exeption.ForbiddenException;
-import ru.practicum.shareit.exeption.NotFoundException;
 import ru.practicum.shareit.exeption.ValidationException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
@@ -41,11 +40,11 @@ public class BookingServiceImpl extends BaseService implements BookingService {
     public BookingDto createBooking(Long userId, BookingInputDto request) {
         validateDates(request.getStart(), request.getEnd());
 
-        User booker = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь не найден: " + userId));
+        User booker = getOrThrow(userRepository.findById(userId),
+                "Пользователь с id " + userId + " не найден");
 
-        Item item = itemRepository.findById(request.getItemId())
-                .orElseThrow(() -> new NotFoundException("Вещь не найдена: " + request.getItemId()));
+        Item item = getOrThrow(itemRepository.findById(request.getItemId()),
+                "Вещь с id " + request.getItemId() + " не найдена");
 
         if (!Boolean.TRUE.equals(item.getAvailable())) {
             throw new ValidationException("Вещь недоступна для бронирования");
@@ -63,8 +62,8 @@ public class BookingServiceImpl extends BaseService implements BookingService {
 
     @Override
     public BookingDto approveBooking(Long ownerId, Long bookingId, boolean approved) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new NotFoundException("Бронирование не найдено: " + bookingId));
+        Booking booking = getOrThrow(bookingRepository.findById(bookingId),
+                "Бронирование c ID " + bookingId + " не найдено");
 
         Long ownerOfItem = booking.getItem().getOwner().getId();
         if (!ownerOfItem.equals(ownerId)) {
@@ -83,14 +82,15 @@ public class BookingServiceImpl extends BaseService implements BookingService {
 
     @Override
     public BookingDto getBooking(Long userId, Long bookingId) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new NotFoundException("Бронирование не найдено: " + bookingId));
+        Booking booking = getOrThrow(bookingRepository.findById(bookingId),
+                "Бронирование c ID " + bookingId + " не найдено");
 
         Long ownerId = booking.getItem().getOwner().getId();
         Long bookerId = booking.getBooker().getId();
 
         if (!ownerId.equals(userId) && !bookerId.equals(userId)) {
-            throw new ForbiddenException("Запрос вещи хозяином или арендатором которой пользователь не является");
+            throw new ForbiddenException("Нет доступа к бронированию: " +
+                    "пользователь с ID " + userId + " не является владельцем вещи и не является её арендатором");
         }
 
         return BookingMapper.toDto(booking);
@@ -98,8 +98,8 @@ public class BookingServiceImpl extends BaseService implements BookingService {
 
     @Override
     public List<BookingDto> getBookingsForUser(Long userId, BookingState state) {
-        userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь не найден: " + userId));
+        getOrThrow(userRepository.findById(userId),
+                "Пользователь с id " + userId + " не найден");
         LocalDateTime now = LocalDateTime.now();
 
         List<Booking> list;
@@ -119,13 +119,15 @@ public class BookingServiceImpl extends BaseService implements BookingService {
             default -> throw new IllegalArgumentException("Неизвестное состояние: " + state);
         }
 
-        return list.stream().map(BookingMapper::toDto).collect(Collectors.toList());
+        return list.stream()
+                .map(BookingMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<BookingDto> getBookingsForOwner(Long ownerId, BookingState state) {
-        userRepository.findById(ownerId)
-                .orElseThrow(() -> new NotFoundException("Пользователь не найден: " + ownerId));
+        getOrThrow(userRepository.findById(ownerId),
+                "Пользователь с id " + ownerId + " не найден");
 
         LocalDateTime now = LocalDateTime.now();
 
@@ -146,7 +148,9 @@ public class BookingServiceImpl extends BaseService implements BookingService {
             default -> throw new IllegalArgumentException("Неизвестное состояние: " + state);
         }
 
-        return list.stream().map(BookingMapper::toDto).collect(Collectors.toList());
+        return list.stream()
+                .map(BookingMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -168,10 +172,7 @@ public class BookingServiceImpl extends BaseService implements BookingService {
     }
 
     private void validateDates(LocalDateTime start, LocalDateTime end) {
-        if (start == null || end == null) {
-            throw new ValidationException("Даты начала и окончания обязательны");
-        }
-        if (!end.isAfter(start)) {
+        if (end.isBefore(start) || end.equals(start)) {
             throw new ValidationException("Дата окончания должна быть позже даты начала");
         }
     }
