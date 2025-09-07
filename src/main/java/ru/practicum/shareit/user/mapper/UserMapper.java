@@ -1,7 +1,8 @@
-package ru.practicum.shareit.user;
+package ru.practicum.shareit.user.mapper;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import ru.practicum.shareit.user.dto.BookerShortDto;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.dto.UserInputDto;
 import ru.practicum.shareit.user.model.User;
@@ -28,5 +29,12 @@ public final class UserMapper {
                 .name(user.getName())
                 .email(user.getEmail())
                 .build();
+    }
+
+    public static BookerShortDto toShortDto(User user) {
+        if (user == null) {
+            return null;
+        }
+        return new BookerShortDto(user.getId());
     }
 }

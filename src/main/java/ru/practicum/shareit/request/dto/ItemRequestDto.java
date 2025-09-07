@@ -11,14 +11,18 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(of = {"id"})
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class ItemRequestDto {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Long id;
+
     @NotBlank(message = "Описание запроса должно быть заполнено!")
     @Size(max = 2000)
     private String description;
+
     @NotNull(message = "Необходимо указать ID автора запроса!")
     private Long requestorId;
+
     private LocalDateTime created;
 }

@@ -1,10 +1,11 @@
-package ru.practicum.shareit.user;
+package ru.practicum.shareit.user.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.booking.common.BaseService;
+import ru.practicum.shareit.common.BaseService;
 import ru.practicum.shareit.exeption.NotFoundException;
 import ru.practicum.shareit.exeption.ValidationException;
+import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.dto.UserInputDto;
 import ru.practicum.shareit.user.model.User;
@@ -62,14 +63,14 @@ public class UserServiceImpl extends BaseService implements UserService {
             existing.setEmail(request.getEmail());
         }
 
-        userRepository.update(existing);
-        return UserMapper.toUserDto(existing);
+        return UserMapper.toUserDto(userRepository.save(existing));
     }
 
     @Override
     public void deleteUser(Long id) {
-        getOrThrow(userRepository.findById(id),
-                "Пользователь с id " + id + " не существует");
-        userRepository.delete(id);
+        if (!userRepository.existsById(id)) {
+            throw new NotFoundException("Пользователь с id " + id + " не существует");
+        }
+        userRepository.deleteById(id);
     }
 }

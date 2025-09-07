@@ -1,9 +1,11 @@
-package ru.practicum.shareit.item;
+package ru.practicum.shareit.item.mapper;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import ru.practicum.shareit.booking.dto.BookingShortDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemInputDto;
+import ru.practicum.shareit.item.dto.ItemShortDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.request.model.ItemRequest;
 
@@ -23,6 +25,23 @@ public final class ItemMapper {
                 .build();
     }
 
+    public static ItemDto toItemWithBookingDto(Item item,
+                                    BookingShortDto lastBooking,
+                                    BookingShortDto nextBooking) {
+        if (item == null) {
+            return null;
+        }
+        return ItemDto.builder()
+                .id(item.getId())
+                .name(item.getName())
+                .description(item.getDescription())
+                .available(item.getAvailable())
+                .requestId(item.getRequest() != null ? item.getRequest().getId() : null)
+                .lastBooking(lastBooking)
+                .nextBooking(nextBooking)
+                .build();
+    }
+
     public static Item toItem(ItemInputDto inputDto, ItemRequest request) {
         if (inputDto == null) {
             return null;
@@ -33,5 +52,12 @@ public final class ItemMapper {
                 .available(inputDto.getAvailable())
                 .request(request)
                 .build();
+    }
+
+    public static ItemShortDto toShortDto(Item item) {
+        if (item == null) {
+            return null;
+        }
+        return new ItemShortDto(item.getId(), item.getName());
     }
 }

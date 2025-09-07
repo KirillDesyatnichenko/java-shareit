@@ -14,9 +14,11 @@ import lombok.*;
 public class UserDto {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Long id;
+
     @NotBlank(message = "Имя должно быть заполнено!")
-    @Size(max = 200)
+    @Size(max = 255)
     private String name;
+
     @NotNull(message = "Адрес электронной почты не заполнен!")
     @Email(message = "Некорректный адрес электронной почты!")
     private String email;

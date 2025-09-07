@@ -45,7 +45,7 @@ public class ErrorHandler {
         return errors;
     }
 
-    @ResponseStatus(HttpStatus.CONFLICT)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(ValidationException.class)
     @ResponseBody
     public ErrorResponse handleValidationException(final ValidationException e) {
@@ -59,7 +59,7 @@ public class ErrorHandler {
         return new ErrorResponse(e.getMessage());
     }
 
-    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
     @ExceptionHandler(ForbiddenException.class)
     @ResponseBody
     public ErrorResponse handleForbiddenException(final ForbiddenException e) {
@@ -70,7 +70,7 @@ public class ErrorHandler {
     @ExceptionHandler(Throwable.class)
     @ResponseBody
     public ErrorResponse handleUnexpectedError(Throwable throwable) {
-        log.error("Произошла непредвиденная ошибка: {}", throwable.getMessage());
+        log.error("Произошла непредвиденная ошибка", throwable);
         return new ErrorResponse("Произошла непредвиденная ошибка.");
     }
 }
