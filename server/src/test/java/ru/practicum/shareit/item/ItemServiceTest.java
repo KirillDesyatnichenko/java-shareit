@@ -14,6 +14,8 @@ import ru.practicum.shareit.exeption.ValidationException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemInputDto;
+import ru.practicum.shareit.item.mapper.CommentMapper;
+import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.item.repository.CommentRepository;
@@ -176,5 +178,66 @@ public class ItemServiceTest {
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> itemService.getItemById(999L));
         assertTrue(ex.getMessage().contains("Вещь с id 999 не найдена"));
+    }
+
+    @Test
+    void createItem_withoutRequest_shouldSucceed() {
+        ItemInputDto input = new ItemInputDto();
+        input.setName("Без запроса");
+        input.setDescription("Просто вещь");
+        input.setAvailable(true);
+
+        ItemDto created = itemService.createItem(owner.getId(), input);
+        assertNotNull(created);
+        assertEquals("Без запроса", created.getName());
+    }
+
+    @Test
+    void updateItem_allFields() {
+        ItemInputDto input = new ItemInputDto();
+        input.setName("Новое имя");
+        input.setDescription("Новое описание");
+        input.setAvailable(false);
+
+        ItemDto updated = itemService.updateItem(owner.getId(), item.getId(), input);
+        assertEquals("Новое имя", updated.getName());
+        assertEquals("Новое описание", updated.getDescription());
+        assertFalse(updated.getAvailable());
+    }
+
+    @Test
+    void getUserItems_emptyAndWithNullBookingsComments() {
+        User newUser = new User();
+        newUser.setName("Empty");
+        newUser.setEmail("empty@mail.ru");
+        newUser = userRepository.save(newUser);
+
+        List<ItemDto> emptyItems = itemService.getUserItems(newUser.getId());
+        assertTrue(emptyItems.isEmpty());
+
+        Item newItem = new Item();
+        newItem.setName("Тестовая вещь");
+        newItem.setDescription("Нет бронирований");
+        newItem.setAvailable(true);
+        newItem.setOwner(owner);
+        newItem = itemRepository.save(newItem);
+
+        Item savedItem = itemRepository.save(newItem);
+
+        List<ItemDto> items = itemService.getUserItems(owner.getId());
+        assertTrue(items.stream().anyMatch(i -> i.getId().equals(savedItem.getId())));
+    }
+
+    @Test
+    void itemMapper_nullInputs_shouldReturnNull() {
+        assertNull(ItemMapper.toItem(null, null));
+        assertNull(ItemMapper.toItemDto(null));
+        assertNull(ItemMapper.toItemWithBookingDto(null, null, null));
+    }
+
+    @Test
+    void commentMapper_nullInputs_shouldReturnNull() {
+        assertNull(CommentMapper.toEntity(null, null, null));
+        assertNull(CommentMapper.toDto(null));
     }
 }

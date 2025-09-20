@@ -190,4 +190,34 @@ public class BookingServiceIntegrationTest {
                 () -> bookingService.createBooking(booker.getId(), input));
         assertEquals("Дата окончания должна быть позже даты начала", ex.getMessage());
     }
+
+    @Test
+    void getBookingsForUser_allStates() {
+        BookingInputDto input = new BookingInputDto();
+        input.setItemId(item.getId());
+        input.setStart(LocalDateTime.now().plusDays(1));
+        input.setEnd(LocalDateTime.now().plusDays(2));
+        BookingDto booking = bookingService.createBooking(booker.getId(), input);
+
+        bookingService.getBookingsForUser(booker.getId(), BookingState.CURRENT);
+        bookingService.getBookingsForUser(booker.getId(), BookingState.PAST);
+        bookingService.getBookingsForUser(booker.getId(), BookingState.FUTURE);
+        bookingService.getBookingsForUser(booker.getId(), BookingState.WAITING);
+        bookingService.getBookingsForUser(booker.getId(), BookingState.REJECTED);
+    }
+
+    @Test
+    void getBookingsForOwner_allStates() {
+        BookingInputDto input = new BookingInputDto();
+        input.setItemId(item.getId());
+        input.setStart(LocalDateTime.now().plusDays(1));
+        input.setEnd(LocalDateTime.now().plusDays(2));
+        BookingDto booking = bookingService.createBooking(booker.getId(), input);
+
+        bookingService.getBookingsForOwner(owner.getId(), BookingState.CURRENT);
+        bookingService.getBookingsForOwner(owner.getId(), BookingState.PAST);
+        bookingService.getBookingsForOwner(owner.getId(), BookingState.FUTURE);
+        bookingService.getBookingsForOwner(owner.getId(), BookingState.WAITING);
+        bookingService.getBookingsForOwner(owner.getId(), BookingState.REJECTED);
+    }
 }

@@ -158,4 +158,25 @@ public class UserServiceTest {
 
         assertThrows(NotFoundException.class, () -> userService.getUserById(saved1.getId()));
     }
+
+    @Test
+    void updateUser_duplicateEmail_shouldThrowValidationException() {
+        UserInputDto update = new UserInputDto();
+        update.setEmail(saved2.getEmail());
+
+        ValidationException ex = assertThrows(ValidationException.class,
+                () -> userService.updateUser(saved1.getId(), update));
+        assertTrue(ex.getMessage().contains("Email уже используется другим пользователем"));
+    }
+
+    @Test
+    void updateUser_emptyNameOrEmail_shouldNotChangeFields() {
+        UserInputDto update = new UserInputDto();
+        update.setName("");
+        update.setEmail("   ");
+
+        UserDto updated = userService.updateUser(saved1.getId(), update);
+        assertEquals(saved1.getName(), updated.getName());
+        assertEquals(saved1.getEmail(), updated.getEmail());
+    }
 }

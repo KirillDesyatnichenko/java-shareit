@@ -147,4 +147,45 @@ public class RequestServiceTest {
         List<ItemRequestDto> result = itemRequestService.getOwnRequests(user1.getId());
         assertTrue(result.isEmpty());
     }
+
+    @Test
+    void createRequest_withoutItems_shouldSucceed() {
+        ItemRequestInputDto input = new ItemRequestInputDto();
+        input.setDescription("Просто запрос");
+
+        ItemRequestDto created = itemRequestService.createRequest(user2.getId(), input);
+        assertNotNull(created);
+        assertEquals("Просто запрос", created.getDescription());
+        assertTrue(created.getItems().isEmpty()); // items пустые
+    }
+
+    @Test
+    void getOwnRequests_withItemHavingNullRequest_shouldHandleGracefully() {
+        Item orphanItem = new Item();
+        orphanItem.setName("Orphan");
+        orphanItem.setDescription("Без запроса");
+        orphanItem.setAvailable(true);
+        orphanItem.setOwner(user1);
+        orphanItem = itemRepository.save(orphanItem);
+
+        List<ItemRequestDto> own = itemRequestService.getOwnRequests(user1.getId());
+        assertTrue(own.stream().allMatch(r -> r.getItems() != null));
+    }
+
+    @Test
+    void getAllRequests_withEmptyPage_shouldReturnEmptyList() {
+        List<ItemRequestDto> result = itemRequestService.getAllRequests(user1.getId(), 0, 10);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getRequestById_withNoItems_shouldReturnDtoWithEmptyItems() {
+        ItemRequestInputDto input = new ItemRequestInputDto();
+        input.setDescription("Запрос без вещей");
+        ItemRequestDto created = itemRequestService.createRequest(user2.getId(), input);
+
+        ItemRequestDto dto = itemRequestService.getRequestById(user2.getId(), created.getId());
+        assertNotNull(dto);
+        assertTrue(dto.getItems().isEmpty());
+    }
 }
