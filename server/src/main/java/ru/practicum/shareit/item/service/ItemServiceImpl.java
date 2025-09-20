@@ -152,9 +152,6 @@ public class ItemServiceImpl extends BaseService implements ItemService {
 
     @Override
     public List<ItemDto> searchItems(String text) {
-        if (text == null || text.isBlank()) {
-            return List.of();
-        }
 
         return itemRepository.search(text).stream()
                 .map(item -> {

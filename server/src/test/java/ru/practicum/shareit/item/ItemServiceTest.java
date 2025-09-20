@@ -144,15 +144,6 @@ public class ItemServiceTest {
     }
 
     @Test
-    void searchItems_emptyOrNullText_shouldReturnEmptyList() {
-        List<ItemDto> result1 = itemService.searchItems("");
-        List<ItemDto> result2 = itemService.searchItems(null);
-
-        assertTrue(result1.isEmpty());
-        assertTrue(result2.isEmpty());
-    }
-
-    @Test
     void createItem_withNonExistentUser_shouldThrowException() {
         ItemInputDto input = new ItemInputDto();
         input.setName("Новая вещь");

@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemInputDto;
 
+import java.util.List;
+
 
 @Slf4j
 @RestController
@@ -47,8 +49,13 @@ public class ItemController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Object> searchItems(@RequestParam String text) {
-        log.info("Произведен поиск вещи");
+    public ResponseEntity<Object> searchItems(@RequestParam(required = false) String text) {
+        log.info("Произведен поиск вещи, text='{}'", text);
+
+        if (text == null || text.isBlank()) {
+            return ResponseEntity.ok(List.of());
+        }
+
         return itemClient.searchItems(text);
     }
 

@@ -38,8 +38,6 @@ public class BookingServiceImpl extends BaseService implements BookingService {
 
     @Override
     public BookingDto createBooking(Long userId, BookingInputDto request) {
-        validateDates(request.getStart(), request.getEnd());
-
         User booker = getOrThrow(userRepository.findById(userId),
                 "Пользователь с id " + userId + " не найден");
 
@@ -169,11 +167,5 @@ public class BookingServiceImpl extends BaseService implements BookingService {
                         itemId, BookingStatus.APPROVED, LocalDateTime.now()
                 )
                 .map(BookingMapper::toShortDto);
-    }
-
-    private void validateDates(LocalDateTime start, LocalDateTime end) {
-        if (end.isBefore(start) || end.equals(start)) {
-            throw new ValidationException("Дата окончания должна быть позже даты начала");
-        }
     }
 }

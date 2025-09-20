@@ -180,18 +180,6 @@ public class BookingServiceIntegrationTest {
     }
 
     @Test
-    void createBooking_invalidDates_shouldThrowValidation() {
-        BookingInputDto input = new BookingInputDto();
-        input.setItemId(item.getId());
-        input.setStart(LocalDateTime.now().plusDays(2));
-        input.setEnd(LocalDateTime.now().plusDays(1));
-
-        ValidationException ex = assertThrows(ValidationException.class,
-                () -> bookingService.createBooking(booker.getId(), input));
-        assertEquals("Дата окончания должна быть позже даты начала", ex.getMessage());
-    }
-
-    @Test
     void getBookingsForUser_allStates() {
         BookingInputDto input = new BookingInputDto();
         input.setItemId(item.getId());
