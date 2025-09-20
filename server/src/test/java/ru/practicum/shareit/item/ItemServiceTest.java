@@ -9,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.booking.repository.BookingRepository;
+import ru.practicum.shareit.exeption.ForbiddenException;
+import ru.practicum.shareit.exeption.ValidationException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemInputDto;
@@ -111,5 +113,68 @@ public class ItemServiceTest {
         Exception ex = assertThrows(RuntimeException.class,
                 () -> itemService.addComment(booker.getId(), item.getId(), dto));
         assertNotNull(ex.getMessage());
+    }
+
+    @Test
+    void updateItem_notOwner_shouldThrowForbidden() {
+        User stranger = new User();
+        stranger.setName("Stranger");
+        stranger.setEmail("stranger@mail.ru");
+        stranger = userRepository.save(stranger);
+
+        ItemInputDto input = new ItemInputDto();
+        input.setName("Чужая вещь");
+
+        User finalStranger = stranger;
+        ForbiddenException ex = assertThrows(ForbiddenException.class,
+                () -> itemService.updateItem(finalStranger.getId(), item.getId(), input));
+        assertEquals("Пользователь " + stranger.getId() + " не может обновить чужую вещь.", ex.getMessage());
+    }
+
+    @Test
+    void addComment_noPastBooking_shouldThrowValidation() {
+        CommentDto dto = new CommentDto();
+        dto.setText("Невозможно комментировать");
+
+        ValidationException ex = assertThrows(ValidationException.class,
+                () -> itemService.addComment(owner.getId(), item.getId(), dto));
+        assertEquals("Пользователь не может оставить комментарий без завершённого бронирования вещи", ex.getMessage());
+    }
+
+    @Test
+    void searchItems_emptyOrNullText_shouldReturnEmptyList() {
+        List<ItemDto> result1 = itemService.searchItems("");
+        List<ItemDto> result2 = itemService.searchItems(null);
+
+        assertTrue(result1.isEmpty());
+        assertTrue(result2.isEmpty());
+    }
+
+    @Test
+    void createItem_withNonExistentUser_shouldThrowException() {
+        ItemInputDto input = new ItemInputDto();
+        input.setName("Новая вещь");
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> itemService.createItem(999L, input));
+        assertTrue(ex.getMessage().contains("Пользователь с id 999 не найден"));
+    }
+
+    @Test
+    void createItem_withNonExistentRequest_shouldThrowException() {
+        ItemInputDto input = new ItemInputDto();
+        input.setName("Вещь");
+        input.setRequestId(999L);
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> itemService.createItem(owner.getId(), input));
+        assertTrue(ex.getMessage().contains("Запрос с id 999 не найден"));
+    }
+
+    @Test
+    void getItemById_nonExistentItem_shouldThrowException() {
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> itemService.getItemById(999L));
+        assertTrue(ex.getMessage().contains("Вещь с id 999 не найдена"));
     }
 }

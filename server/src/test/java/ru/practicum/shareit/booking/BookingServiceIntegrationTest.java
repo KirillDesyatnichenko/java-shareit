@@ -11,6 +11,8 @@ import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.model.BookingState;
 import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.booking.service.BookingService;
+import ru.practicum.shareit.exeption.ForbiddenException;
+import ru.practicum.shareit.exeption.ValidationException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.model.User;
@@ -114,5 +116,78 @@ public class BookingServiceIntegrationTest {
 
         assertTrue(bookingService.getLastBookingForItem(item.getId()).isPresent());
         assertTrue(bookingService.getNextBookingForItem(item.getId()).isPresent());
+    }
+
+    @Test
+    void createBooking_ownerBookingOwnItem_shouldThrowForbidden() {
+        BookingInputDto input = new BookingInputDto();
+        input.setItemId(item.getId());
+        input.setStart(LocalDateTime.now().plusDays(1));
+        input.setEnd(LocalDateTime.now().plusDays(2));
+
+        ForbiddenException ex = assertThrows(ForbiddenException.class,
+                () -> bookingService.createBooking(owner.getId(), input));
+        assertEquals("Владелец не может бронировать свою вещь", ex.getMessage());
+    }
+
+    @Test
+    void getBooking_userNotOwnerOrBooker_shouldThrowForbidden() {
+        User stranger = new User();
+        stranger.setName("Anton");
+        stranger.setEmail("Anton@mail.ru");
+        stranger = userRepository.save(stranger);
+
+        BookingInputDto input = new BookingInputDto();
+        input.setItemId(item.getId());
+        input.setStart(LocalDateTime.now().plusDays(1));
+        input.setEnd(LocalDateTime.now().plusDays(2));
+
+        BookingDto booking = bookingService.createBooking(booker.getId(), input);
+
+        User finalStranger = stranger;
+        ForbiddenException ex = assertThrows(ForbiddenException.class,
+                () -> bookingService.getBooking(finalStranger.getId(), booking.getId()));
+        assertTrue(ex.getMessage().contains("Нет доступа к бронированию"));
+    }
+
+    @Test
+    void approveBooking_notOwner_shouldThrowForbidden() {
+        BookingInputDto input = new BookingInputDto();
+        input.setItemId(item.getId());
+        input.setStart(LocalDateTime.now().plusDays(1));
+        input.setEnd(LocalDateTime.now().plusDays(2));
+
+        BookingDto booking = bookingService.createBooking(booker.getId(), input);
+
+        ForbiddenException ex = assertThrows(ForbiddenException.class,
+                () -> bookingService.approveBooking(booker.getId(), booking.getId(), true));
+        assertEquals("Только владелец вещи может изменять статус бронирования", ex.getMessage());
+    }
+
+    @Test
+    void approveBooking_alreadyApproved_shouldThrowValidation() {
+        BookingInputDto input = new BookingInputDto();
+        input.setItemId(item.getId());
+        input.setStart(LocalDateTime.now().plusDays(1));
+        input.setEnd(LocalDateTime.now().plusDays(2));
+
+        BookingDto booking = bookingService.createBooking(booker.getId(), input);
+        bookingService.approveBooking(owner.getId(), booking.getId(), true);
+
+        ValidationException ex = assertThrows(ValidationException.class,
+                () -> bookingService.approveBooking(owner.getId(), booking.getId(), true));
+        assertTrue(ex.getMessage().contains("Статус уже был установлен"));
+    }
+
+    @Test
+    void createBooking_invalidDates_shouldThrowValidation() {
+        BookingInputDto input = new BookingInputDto();
+        input.setItemId(item.getId());
+        input.setStart(LocalDateTime.now().plusDays(2));
+        input.setEnd(LocalDateTime.now().plusDays(1));
+
+        ValidationException ex = assertThrows(ValidationException.class,
+                () -> bookingService.createBooking(booker.getId(), input));
+        assertEquals("Дата окончания должна быть позже даты начала", ex.getMessage());
     }
 }
